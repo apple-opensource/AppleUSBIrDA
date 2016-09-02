@@ -75,7 +75,7 @@ EventTraceCauseDesc IrLogEvents[] = {
     
 };
 
-#define XTRACE(x, y, z) IrDALogAdd( x, y, z, IrLogEvents, true )
+#define XTRACE(x, y, z) IrDALogAdd( x, y, (uintptr_t)z & 0xffff, IrLogEvents, true )
 
 #else
 #define XTRACE(x,y,z)((void)0)
@@ -89,7 +89,7 @@ CIrDevice *
 CIrDevice::cIrDevice(TIrGlue *irda, AppleIrDASerial *driver)
 {
     CIrDevice *obj = new CIrDevice;
-    XTRACE(kLogNew, (int)obj >> 16, (short)obj);
+    XTRACE(kLogNew, 0, obj);
     if (obj && !obj->Init(irda, driver)) {
 	obj->release();
 	obj = nil;
@@ -100,14 +100,14 @@ CIrDevice::cIrDevice(TIrGlue *irda, AppleIrDASerial *driver)
 void
 CIrDevice::free(void)
 {
-    XTRACE(kLogFree, (int)this >> 16, (short)this);
+    XTRACE(kLogFree, 0, this);
     super::free();
 }
 
 Boolean
 CIrDevice::Init(TIrGlue *irda, AppleIrDASerial *driver)
 {
-    XTRACE(kLogInit, (int)this >> 16, (short)this);
+    XTRACE(kLogInit, 0, this);
     
     
     fIrDA = nil;
@@ -171,7 +171,7 @@ CIrDevice::ValidFrameAddress(UInt8 aField)
 //--------------------------------------------------------------------------------
 IrDAErr CIrDevice::ChangeSpeed(unsigned long bps)
 {
-    XTRACE(kLogChangeSpeed, bps >> 16, (short)bps);
+    XTRACE(kLogChangeSpeed, bps >> 16, bps);
     require(fDriver, Fail);
     check(fXmitting == false);
 	
@@ -271,7 +271,7 @@ void CIrDevice::ReadComplete(UInt8 *buffer, UInt32 length)
 		b++;
 		len--;
 	    }
-	    XTRACE(kLogReadComplete, w >> 16, (short)w);
+	    XTRACE(kLogReadComplete, w >> 16, w);
 	}
     }
 
@@ -304,7 +304,7 @@ void CIrDevice::ReadComplete(UInt8 *buffer, UInt32 length)
 	fIrDA->GetLAP()->InputComplete(aField,cField);      // then let LAP know about it (already owns "fGetBuffer")
     }
     else {
-	int review_media_busy_logic;
+	//int review_media_busy_logic;
     //  fMediaBusy = true;                                  // else did we just saw someone else's traffic?
 	Stats_PacketDropped();                              // different counters?
     }
@@ -335,19 +335,19 @@ void CIrDevice::StartTransmit(TIrLAPPutBuffer* outputBuffer, ULong leadInCount)
 	fBofs = leadInCount;
     }
 
-    XTRACE(kLogStartXmitPutBuf, (int)outputBuffer >> 16, (short)outputBuffer);
+    XTRACE(kLogStartXmitPutBuf, 0, outputBuffer);
     
     ctlBuffer  = outputBuffer->GetCtrlBuffer();
-    XTRACE(kLogStartXmitCtlBuf, (int)ctlBuffer >> 16, (short)ctlBuffer);
+    XTRACE(kLogStartXmitCtlBuf, 0, ctlBuffer);
     
     ctlSize    = outputBuffer->GetCtrlSize();
-    XTRACE(kLogStartXmitCtlSize, (int)ctlSize >> 16, (short)ctlSize);
+    XTRACE(kLogStartXmitCtlSize, 0, ctlSize);
     
     dataBuffer = outputBuffer->GetDataBuffer();
-    XTRACE(kLogStartXmitDataBuf, (int)dataBuffer >> 16, (short)dataBuffer);
+    XTRACE(kLogStartXmitDataBuf, 0, dataBuffer);
     
     dataSize   = outputBuffer->GetDataSize();
-    XTRACE(kLogStartXmitDataSize, (int)dataSize >> 16, (short)dataSize);
+    XTRACE(kLogStartXmitDataSize, (int)dataSize >> 16, dataSize);
 	
     //require(ctlSize + dataSize <= LapLength, Fail);
 			
@@ -358,7 +358,7 @@ void CIrDevice::StartTransmit(TIrLAPPutBuffer* outputBuffer, ULong leadInCount)
 	UInt8 *b = ctlBuffer;           // start with control buffer, then switch to data buffer
 	int i;
 	
-	XTRACE(kLogStartXmitLength, len >> 16, (short)len);
+	XTRACE(kLogStartXmitLength, len >> 16, len);
 	
 	require(len > 0 && ctlSize > 0 && ctlBuffer != nil, Fail);  // sanity (assumes non-empty ctlbuffer)
 	
@@ -373,7 +373,7 @@ void CIrDevice::StartTransmit(TIrLAPPutBuffer* outputBuffer, ULong leadInCount)
 		    b = dataBuffer;             //  then switch to data buffer
 		len--;
 	    }
-	    XTRACE(kLogStartXmitData, w >> 16, (short)w);
+	    XTRACE(kLogStartXmitData, w >> 16, w);
 	}
     }
 #endif // hasCIrDeviceTracing > 1
@@ -381,7 +381,7 @@ void CIrDevice::StartTransmit(TIrLAPPutBuffer* outputBuffer, ULong leadInCount)
     // start the transmit
     ior = fDriver->StartTransmit(ctlSize, ctlBuffer, dataSize, dataBuffer);
     if (ior != kIOReturnSuccess) {
-	XTRACE(kLogStartXmitError, ior >> 16, (short)ior);
+	XTRACE(kLogStartXmitError, ior >> 16, ior);
 	TransmitComplete(false);
 	return;
     }

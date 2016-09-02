@@ -39,7 +39,7 @@ EventTraceCauseDesc TraceEvents[] = {
     {kLogElementFree,       "IrService: element free, obj="}
 };
 
-#define XTRACE(x, y, z) IrDALogAdd( x, y, z, TraceEvents, true )
+#define XTRACE(x, y, z) IrDALogAdd( x, y, ((uintptr_t)z & 0xffff), TraceEvents, true )
 #else
 #define XTRACE(x, y, z) ((void)0)
 #endif
@@ -59,7 +59,7 @@ TIASService::tIASService(void)
 {
     TIASService *obj = new TIASService;
     
-    XTRACE(kLogServiceNew, (int)obj >> 16, (short)obj);
+    XTRACE(kLogServiceNew, 0, obj);
     
     if (obj && !obj->Init()) {      // this named list has no name
 	obj->release();
@@ -76,7 +76,7 @@ void TIASService::free()
 {
     long index;
     
-    XTRACE(kLogServiceFree, (int)this >> 16, (short)this);
+    XTRACE(kLogServiceFree, 0, this);
 
     // Iterate thru the list of classes and delete each one.  Note that I'm not
     // removing them because I'm depending on the CList destructor to do that for me.
@@ -351,7 +351,7 @@ TIASClass::tIASClass(const UChar *name)
 {
     TIASClass *obj = new TIASClass;
     
-    XTRACE(kLogClassNew, (int)obj >> 16, (short)obj);
+    XTRACE(kLogClassNew, 0, obj);
     
     if (obj && !obj->Init(name)) {
 	obj->release();
@@ -368,7 +368,7 @@ void TIASClass::free()
 {
     long index;
     
-    XTRACE(kLogClassFree, (int)this >> 16, (short)this);
+    XTRACE(kLogClassFree, 0, this);
 
     // Iterate thru the list of attributes and delete each one.  Note that I'm not
     // removing them because I'm depending on the list destructor to do that for me.
@@ -419,7 +419,7 @@ TIASAttribute::tIASAttribute(const UChar *name)
 {
     TIASAttribute *obj = new TIASAttribute;
     
-    XTRACE(kLogAttrNew, (int)obj >> 16, (short)obj);
+    XTRACE(kLogAttrNew, 0, obj);
     
     if (obj && !obj->Init(name)) {
 	obj->release();
@@ -434,7 +434,7 @@ TIASAttribute::tIASAttribute(CBuffer *buffer)
 {
     TIASAttribute *obj = new TIASAttribute;
 
-    XTRACE(kLogAttrNew, (int)obj >> 16, (short)obj);
+    XTRACE(kLogAttrNew, 0, obj);
 
     if (obj && !obj->InitFromBuffer(buffer)) {
 	obj->release();
@@ -451,7 +451,7 @@ void TIASAttribute::free()
 {
     long index;
     
-    XTRACE(kLogAttrFree, (int)this >> 16, (short)this);
+    XTRACE(kLogAttrFree, 0, this);
 
     // Iterate thru the list of elements and delete each one.  Note that I'm not
     // removing them because I'm depending on the list destructor to do that for me.
@@ -552,7 +552,7 @@ OSDefineMetaClassAndStructors(TIASNamedList, CList);
 //--------------------------------------------------------------------------------
 void TIASNamedList::free()
 {
-    XTRACE(kLogNamedListFree, (int)this >> 16, (short)this);
+    XTRACE(kLogNamedListFree, 0, this);
     
     if (fName != nil) {
 	IOFree(fName, fNameLen);
@@ -578,7 +578,7 @@ Boolean TIASNamedList::Init(const UChar *theName)
 	fName = (UChar*)IOMalloc(strlen((const char*)theName) + 1);
 	require(fName, Fail);
     }
-    strcpy((char*)fName, (const char*)theName);
+    strlcpy((char*)fName, (const char*)theName, fNameLen);
     return true;
     
 Fail:
@@ -602,7 +602,7 @@ void* TIASNamedList::Search(const UChar* matchName)
     CListIterator *iter = CListIterator::cListIterator(this);
     TIASNamedList* item;
     void* result = nil;
-    int review_consider_putting_in_dynamic_cast;    // to make sure list items are named lists
+    //int review_consider_putting_in_dynamic_cast;    // to make sure list items are named lists
 
     for (item = (TIASNamedList*)iter->FirstItem(); iter->More(); item = (TIASNamedList*)iter->NextItem()) {
 	if (strcmp((const char*)(item->fName), (const char*)matchName) == 0) {
@@ -632,7 +632,7 @@ TIASElement * TIASElement::tIASElement(ULong theValue)
 {
     TIASElement *obj = new TIASElement;
     
-    XTRACE(kLogElementNew, (int)obj >> 16, (short)obj);
+    XTRACE(kLogElementNew, 0, obj);
     
     if (obj && !obj->init_with_long(theValue)) {
 	obj->release();
@@ -646,7 +646,7 @@ TIASElement * TIASElement::tIASElement(const UChar* theBytes, ULong length)
 {
     TIASElement *obj = new TIASElement;
     
-    XTRACE(kLogElementNew, (int)obj >> 16, (short)obj);
+    XTRACE(kLogElementNew, 0, obj);
     
     if (obj && !obj->init_with_nbytes(theBytes, length)) {
 	obj->release();
@@ -660,7 +660,7 @@ TIASElement * TIASElement::tIASElement(const UChar* theString, UChar charSet, UL
 {
     TIASElement *obj = new TIASElement;
     
-    XTRACE(kLogElementNew, (int)obj >> 16, (short)obj);
+    XTRACE(kLogElementNew, 0, obj);
     
     if (obj && !obj->init_with_string(theString, charSet, length)) {
 	obj->release();
@@ -674,7 +674,7 @@ TIASElement * TIASElement::tIASElement(CBuffer* buffer)
 {
     TIASElement *obj = new TIASElement;
     
-    XTRACE(kLogElementNew, (int)obj >> 16, (short)obj);
+    XTRACE(kLogElementNew, 0, obj);
     
     if (obj && !obj->init_with_buffer(buffer)) {
 	obj->release();
@@ -693,7 +693,7 @@ void TIASElement::free()
     int len;
     
     
-    XTRACE(kLogElementFree, (int)this >> 16, (short)this);
+    XTRACE(kLogElementFree, 0, this);
     
     if (nameOrBytes && (nameOrBytes != (UByte*)&valueOrBytes)) {        // if we allocated memory
 	len = length;
@@ -769,7 +769,7 @@ Boolean TIASElement::SetInteger(ULong theValue)
 {
     type = kIASValueInteger;
     length = 4;
-    valueOrBytes = theValue;
+    valueOrBytes = htonl(theValue);
     nameOrBytes = (UByte*)&valueOrBytes;
     return true;
 } // TIASElement::SetInteger
@@ -833,7 +833,7 @@ IrDAErr TIASElement::GetInteger(ULong  *theValue)
     if (type != kIASValueInteger) {
 	return kIrDAErrGeneric; // ***FIXME: Better error return
     }
-    *theValue = valueOrBytes;
+    *theValue = ntohl(valueOrBytes);
     return noErr;
 
 } // TIASElement::GetInteger
@@ -940,6 +940,7 @@ Boolean TIASElement::ExtractInfoFromBuffer(CBuffer* buffer)
 	    if (buffer->Getn((UByte*)&intValue, sizeof(intValue)) != sizeof(intValue)) {
 		return kIrDAErrGeneric; // FIXME: Return better error code
 	    }
+	    intValue = ntohl(intValue);	// convert to host before saving
 	    rc = SetInteger(intValue);
 	    break;
 

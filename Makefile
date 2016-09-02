@@ -1,23 +1,24 @@
-#
-# silly makefile cause Jim's fingers type 'make' without any cognitive input
-#
-all:	build DumpLog/dumplog IrDAStatus/build  IrDADebugLog/build
+ARCHS   ?= ppc i386 x86_64
+DSTROOT ?= /
 
-build:
-	pbxbuild
 
-DumpLog/dumplog: 
-	(cd DumpLog ; make)
+all:
+	make clean
+	xcodebuild ARCHS="${ARCHS}"
 
-IrDAStatus/build:
-	(cd IrDAStatus ; pbxbuild)
+utils:
+	xcodebuild ARCHS="${ARCHS}" -target DumpLog
+	xcodebuild ARCHS="${ARCHS}" -target Status
+	xcodebuild ARCHS="${ARCHS}" -target "Debug Log"
 
-IrDADebugLog/build:
-	(cd IrDADebugLog ; pbxbuild)
-	
 clean:
-	(cd DumpLog ; make clean)
-	pbxbuild clean ; rm -rf build
-	(cd IrDAStatus ; pbxbuild clean ; rm -rf build)
-	(cd IrDADebugLog ; pbxbuild clean ; rm -rf build)
+	sudo rm -rf build
 
+install:
+	make clean
+	sudo xcodebuild install DSTROOT="${DSTROOT}"
+	sudo touch /System/Library/Extensions/IOSerialFamily.kext/Contents/PlugIns
+	sudo touch /System/Library/Extensions/IOSerialFamily.kext/Contents
+	sudo touch /System/Library/Extensions/IOSerialFamily.kext
+	sudo touch /System/Library/Extensions
+	sync ; sync
